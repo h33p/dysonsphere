@@ -1,0 +1,10 @@
+node_modules
+out
+.env
+**.DS_Store
+.next
+coverage
+coverage.json
+typechain
+typechain-types
+yarn-error.log

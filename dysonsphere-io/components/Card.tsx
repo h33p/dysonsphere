@@ -5,13 +5,12 @@ import { MetaMask } from '@web3-react/metamask'
 import { Network } from '@web3-react/network'
 import { WalletConnect } from '@web3-react/walletconnect'
 
-import { getName } from '../utils'
 import { Accounts } from './Accounts'
 import { Chain } from './Chain'
 import { ConnectWithSelect } from './ConnectWithSelect'
 import { Status } from './Status'
 
-interface Props {
+interface ConnectorReturn {
   connector: MetaMask | WalletConnect | CoinbaseWallet | Network | GnosisSafe
   chainId: ReturnType<Web3ReactHooks['useChainId']>
   isActivating: ReturnType<Web3ReactHooks['useIsActivating']>
@@ -23,17 +22,21 @@ interface Props {
   accounts?: string[]
 }
 
-export function Card({
-  connector,
-  chainId,
-  isActivating,
-  isActive,
-  error,
-  setError,
-  ENSNames,
-  accounts,
-  provider,
-}: Props) {
+interface ConnectorInfo {
+  func: () => ConnectorReturn
+  name: string
+}
+
+interface Props {
+  connectorData: ConnectorReturn
+  connectors: ConnectorInfo[]
+  connectorId: number
+  setConnectorId: (number) => void
+}
+
+export function Card({ connectorData, connectors, connectorId, setConnectorId }: Props) {
+  const { connector, chainId, isActivating, isActive, error, setError, ENSNames, accounts, provider } = connectorData
+
   return (
     <div
       style={{
@@ -48,7 +51,19 @@ export function Card({
         borderRadius: '1rem',
       }}
     >
-      <b>{getName(connector)}</b>
+      <select
+        value={connectorId}
+        onChange={(event) => {
+          setConnectorId(Number(event.target.value))
+        }}
+      >
+        {connectors.map((conn, id) => (
+          <option key={id} value={id}>
+            {conn.name}
+          </option>
+        ))}
+      </select>
+
       <div style={{ marginBottom: '1rem' }}>
         <Status isActivating={isActivating} isActive={isActive} error={error} />
       </div>

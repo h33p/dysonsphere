@@ -6,6 +6,8 @@ import { useTheme } from 'next-themes'
 import { useCallback, useEffect, useState } from 'react'
 
 import { useMetaMaskConnector } from '../connectors/metaMask'
+import { useNetworkConnector } from '../connectors/network'
+import { useWalletConnectConnector } from '../connectors/walletConnect'
 import { DUST_ABI, ERC20_ABI, TREASURY_ABI } from '../constants/abis'
 import { DYSONSPHERE_ADDR, TREASURY_ADDR, WSTR_ADDR } from '../constants/addrs'
 import { DYSONSPHERE_ABI } from '../constants/IDysonSphere'
@@ -214,7 +216,7 @@ function Pool({
       const dysonSphere = new ethers.Contract(DYSONSPHERE_ADDR, DYSONSPHERE_ABI, signer)
       const wstr = new ethers.Contract(WSTR_ADDR, DUST_ABI, signer)
 
-      const balance = wstr.balanceOf(accounts[0])
+      const balance = await wstr.balanceOf(accounts[0])
       const allowance = await wstr.allowance(accounts[0], DYSONSPHERE_ADDR)
 
       if (balance.lt(totalCost)) {
@@ -354,8 +356,17 @@ function Pool({
 }
 
 export default function Page() {
-  const { connector, chainId, isActivating, isActive, error, setError, accounts, provider, ENSNames } =
-    useMetaMaskConnector()
+  const connectors = [
+    { func: useNetworkConnector, name: 'No Wallet' },
+    { func: useMetaMaskConnector, name: 'MetaMask' },
+    { func: useWalletConnectConnector, name: 'WalletConnect' },
+  ]
+
+  const [connectorId, setConnectorId] = useState<number>(0)
+
+  const connectorData = connectors[connectorId].func()
+
+  const { accounts, provider } = connectorData
 
   const [stars, setStars, updateStars] = useStars(provider)
   const starsInTreasury = new Set(stars?.map((star) => star.id) ?? [])
@@ -720,15 +731,10 @@ export default function Page() {
       </div>
       <div style={{ flex: 0.01 }}>
         <Card
-          connector={connector}
-          chainId={chainId}
-          isActivating={isActivating}
-          isActive={isActive}
-          error={error}
-          setError={setError}
-          accounts={accounts}
-          provider={provider}
-          ENSNames={ENSNames}
+          connectorData={connectorData}
+          connectors={connectors}
+          connectorId={connectorId}
+          setConnectorId={setConnectorId}
         />
         <div
           style={{
